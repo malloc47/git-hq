@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 import sys,os
-import configparser as cp
+try:
+    import configparser as cp
+except:
+    import ConfigParser as cp   # python 2.x
 import subprocess as sp
-sys.path.insert(0,os.getcwd())
 import git
 
 program_name = "git-hq"
