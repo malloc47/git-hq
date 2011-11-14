@@ -1,0 +1,94 @@
+#!/usr/bin/python3
+import sys,os
+import configparser as cp
+import subprocess as sp
+sys.path.insert(0,os.getcwd())
+import git
+
+program_name = "git-hq"
+
+class Repo(object):
+    def __init__(self,name,id,repos):
+        self.name = name
+        self.id = id
+        self.repos = repos
+
+def load_config(file):
+    c = cp.ConfigParser()
+    c.readfp(open(file))
+    c.read(file)
+
+    remotes = {}
+    for r in c['remotes']:
+        remotes[r] = c['remotes'][r]
+
+    c.remove_section('remotes')
+
+    repos = {}
+
+    for s in c.sections():
+        repos[c[s]['id']] = Repo(s,c[s]['id'],
+                                 [remotes[r].replace("{}",s) 
+                                  for r in c[s]['repos'].split(',')])
+    return repos
+
+def identify_repo(repos):
+    for h in git.hashes():
+        if(h in repos):
+            return repos[h]
+    return None
+
+def suggest():
+    print("""Add the following to ~/.%s to include this repo
+[%s]
+\tid=%s
+\trepos=...""" % (program_name, git.name(), git.last_hash()) )
+
+def cmd_help(repo=None):
+    print("""usage: %s <command>
+commands available include:
+\tpull
+\tpush
+\thelp""" % program_name)
+
+def pull(repo):
+    git.cmd('pull',repo.repos[0])
+
+def push(repo):
+    for r in repo.repos:
+        git.cmd('push',r)
+
+def main(*argv):
+
+    if (len(sys.argv) < 2):
+        cmd_help()
+        return 0
+
+    try:
+        repos = load_config(os.getenv("HOME")+"/."+program_name)
+    except IOError:
+        print("fatal: no ~/."+program_name+" config file found")
+        return 1
+
+    try:
+        repo = identify_repo(repos)
+    except sp.CalledProcessError:
+        print("fatal: no git repository found")
+        return 1
+
+    if repo is None:
+        print(program_name+": git repository not identified")
+        suggest()
+        return 1
+
+    verbs = {'pull':pull, 'push':push, 'help':cmd_help}
+
+    try:
+        verbs[argv[1]](repo)
+    except KeyError:
+        print(program_name+": "+argv[1]+" is not a "+program_name+" command. See 'git hq help'.")
+
+    return 0
+ 
+if __name__ == '__main__':
+    sys.exit(main(*sys.argv))

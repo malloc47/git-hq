@@ -1,0 +1,7 @@
+[remotes]
+	github=git@github.com:username/{}.git
+	bitbucket=git@bitbucket.org:username/{}.git
+
+[project]
+	id=abcdef0123456789
+	repos=github,bitbucket
