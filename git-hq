@@ -29,7 +29,8 @@ def load_config(file):
     for s in sections:
         p = dict(c.items(s))    # p=properties
         repos[p['id']] = Repo(s,p['id'],
-                              [remotes[r].replace("{}",s) for r in p['repos'].split(',')])
+                              [remotes[r].replace("{repo}",s).replace("{uname}",p['uname']) 
+                               for r in p['repos'].split(',')])
     return repos
 
 def identify_current_repo(repos):

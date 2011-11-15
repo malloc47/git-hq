@@ -1,6 +1,9 @@
+[DEFAULTS]
+uname=myusername
+
 [remotes]
-github=git@github.com:username/{}.git
-bitbucket=git@bitbucket.org:username/{}.git
+github=git@github.com:{uname}/{repo}.git
+bitbucket=git@bitbucket.org:{uname}/{repo}.git
 
 [project]
 id=abcdef0123456789
