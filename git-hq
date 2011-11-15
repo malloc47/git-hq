@@ -4,8 +4,7 @@ try:
     import configparser as cp
 except:
     import ConfigParser as cp   # python 2.x
-import subprocess as sp
-sys.path.insert(0,os.getcwd())
+#sys.path.insert(0,os.getcwd())
 import git
 
 program_name = "git-hq"
@@ -51,7 +50,7 @@ def suggest():
 [%s]
 id=%s
 repos=...""" % (program_name, git.name(), git.last_hash()) )
-    except sp.CalledProcessError:
+    except:
         print("""Add repo information to ~/.%s or run in existing repository""" %
               program_name)
 
