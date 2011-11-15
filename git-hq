@@ -1,10 +1,11 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 import sys,os
 try:
     import configparser as cp
 except:
     import ConfigParser as cp   # python 2.x
 import subprocess as sp
+sys.path.insert(0,os.getcwd())
 import git
 
 program_name = "git-hq"
@@ -16,53 +17,64 @@ class Repo(object):
         self.repos = repos
 
 def load_config(file):
-    c = cp.ConfigParser()
-    c.readfp(open(file))
+    c = cp.RawConfigParser()
     c.read(file)
 
-    remotes = {}
-    for r in c['remotes']:
-        remotes[r] = c['remotes'][r]
+    remotes = dict(c.items('remotes'))
 
-    c.remove_section('remotes')
-
+    sections = c.sections()
+    sections.remove('remotes')
+    
     repos = {}
 
-    for s in c.sections():
-        repos[c[s]['id']] = Repo(s,c[s]['id'],
-                                 [remotes[r].replace("{}",s) 
-                                  for r in c[s]['repos'].split(',')])
+    for s in sections:
+        p = dict(c.items(s))    # p=properties
+        repos[p['id']] = Repo(s,p['id'],
+                              [remotes[r].replace("{}",s) for r in p['repos'].split(',')])
     return repos
 
-def identify_repo(repos):
+def identify_current_repo(repos):
     for h in git.hashes():
         if(h in repos):
             return repos[h]
     return None
 
-def suggest():
-    print("""Add the following to ~/.%s to include this repo
-[%s]
-\tid=%s
-\trepos=...""" % (program_name, git.name(), git.last_hash()) )
+def identify_desired_repo(repos,name):
+    try:
+        return next(r for k,r in repos.items() if r.name==name)
+    except StopIteration:
+        return None
 
-def cmd_help(repo=None):
+def suggest():
+    try:
+        print("""Add the following to ~/.%s to include this repo
+[%s]
+id=%s
+repos=...""" % (program_name, git.name(), git.last_hash()) )
+    except sp.CalledProcessError:
+        print("""Add repo information to ~/.%s or run in existing repository""" %
+              program_name)
+
+def cmd_help(repo=None,args=None):
     print("""usage: %s <command>
 commands available include:
 \tpull
 \tpush
 \thelp""" % program_name)
 
-def pull(repo):
+def pull(repo,args=None):
     git.cmd('pull',repo.repos[0])
 
-def push(repo):
+def push(repo,args=None):
     for r in repo.repos:
         git.cmd('push',r)
 
+def clone(repo,args=None):
+    git.cmd('clone',repo.repos[0])
+
 def main(*argv):
 
-    if (len(sys.argv) < 2):
+    if (len(argv) < 2):
         cmd_help()
         return 0
 
@@ -72,21 +84,30 @@ def main(*argv):
         print("fatal: no ~/."+program_name+" config file found")
         return 1
 
-    try:
-        repo = identify_repo(repos)
-    except sp.CalledProcessError:
-        print("fatal: no git repository found")
-        return 1
+    # check if we can even get repo info...
+    exists = git.exists()
+    # obtain repo info if so
+    repo = identify_current_repo(repos) if exists else None
+    # if user was trying to create a repo, look it up in config
+    desired_repo = (identify_desired_repo(repos,argv[2]) if 
+                    (len(argv) > 2) and not exists else None)
 
-    if repo is None:
-        print(program_name+": git repository not identified")
+    # handle error cases
+    if repo is None and desired_repo is None:
+        print(program_name+": no repository found or not in config file")
+        return 1
+    elif exists and repo is None:
+        print(program_name+": git repository not in config file")
         suggest()
         return 1
 
-    verbs = {'pull':pull, 'push':push, 'help':cmd_help}
+    if repo is None:
+        repo = desired_repo
+
+    verbs = {'clone':clone, 'pull':pull, 'push':push, 'help':cmd_help}
 
     try:
-        verbs[argv[1]](repo)
+        verbs[argv[1]](repo,argv[2:])
     except KeyError:
         print(program_name+": "+argv[1]+" is not a "+program_name+" command. See 'git hq help'.")
 
