@@ -92,10 +92,10 @@ def main(*argv):
                     (len(argv) > 2) and not exists else None)
 
     # handle error cases
-    if repo is None and desired_repo is None:
+    if not exists and repo is None and desired_repo is None:
         print(program_name+": no repository found or not in config file")
         return 1
-    elif exists and repo is None:
+    elif exists and repo is None and desired_repo is None:
         print(program_name+": git repository not in config file")
         suggest()
         return 1
