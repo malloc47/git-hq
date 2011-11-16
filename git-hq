@@ -15,6 +15,26 @@ class Repo(object):
         self.id = id
         self.repos = repos
 
+class NoRepo(Exception):
+    def message(self,exists):
+        if exists:
+            print(program_name+": git repository not in config file")
+            suggest()
+        elif exists:
+            print(program_name+": no repository found or not in config file")
+    
+
+class NoDesiredRepo(Exception):
+    # def __init__(self,name):
+    #     self.name = name
+    # def __str__(self):
+    #     return repr(self.name)
+    def message(self,exists):
+        if exists:
+            print(program_name+": git repository currently exists here")
+        else:
+            print(program_name+": repository not in config file")
+
 def load_config(file):
     c = cp.RawConfigParser()
     c.read(file)
@@ -31,7 +51,7 @@ def load_config(file):
         repos[p['id']] = Repo(s,p['id'],
                               [remotes[r].replace("{repo}",s).replace("{uname}",p['uname']) 
                                for r in p['repos'].split(',')])
-    return repos
+    return repos,remotes
 
 def identify_current_repo(repos):
     for h in git.hashes():
@@ -55,22 +75,28 @@ repos=...""" % (program_name, git.name(), git.last_hash()) )
         print("""Add repo information to ~/.%s or run in existing repository""" %
               program_name)
 
-def cmd_help(repo=None,args=None):
+def cmd_help(args=None):
     print("""usage: %s <command>
 commands available include:
 \tpull
 \tpush
 \thelp""" % program_name)
 
-def pull(repo,args=None):
-    git.cmd('pull',repo.repos[0])
+def pull(args):
+    if args['repo'] is None:
+        raise NoRepo
+    git.cmd('pull',args['repo'].repos[0])
 
-def push(repo,args=None):
-    for r in repo.repos:
+def push(args):
+    if args['repo'] is None:
+        raise NoRepo
+    for r in args['repo'].repos:
         git.cmd('push',r)
 
-def clone(repo,args=None):
-    git.cmd('clone',repo.repos[0])
+def clone(args):
+    if args['desired'] is None:
+        raise NoDesiredRepo
+    git.cmd('clone',args['desired'].repos[0])
 
 def main(*argv):
 
@@ -79,7 +105,7 @@ def main(*argv):
         return 0
 
     try:
-        repos = load_config(os.getenv("HOME")+"/."+program_name)
+        repos,remotes = load_config(os.getenv("HOME")+"/."+program_name)
     except IOError:
         print("fatal: no ~/."+program_name+" config file found")
         return 1
@@ -90,26 +116,29 @@ def main(*argv):
     repo = identify_current_repo(repos) if exists else None
     # if user was trying to create a repo, look it up in config
     desired_repo = (identify_desired_repo(repos,argv[2]) if 
-                    (len(argv) > 2) and not exists else None)
+                    (len(argv) > 2) else None)
 
     # handle error cases
-    if not exists and repo is None and desired_repo is None:
-        print(program_name+": no repository found or not in config file")
-        return 1
-    elif exists and repo is None and desired_repo is None:
-        print(program_name+": git repository not in config file")
-        suggest()
-        return 1
+    # if not exists and repo is None and desired_repo is None:
+    #     print(program_name+": no repository found or not in config file")
+    #     return 1
+    # elif exists and repo is None and desired_repo is None:
+    #     print(program_name+": git repository not in config file")
+    #     suggest()
+    #     return 1
 
-    if repo is None:
-        repo = desired_repo
+    arguments = {'exists':exists, 'repo':repo, 'desired':desired_repo, 'remotes':remotes}
 
     verbs = {'clone':clone, 'pull':pull, 'push':push, 'help':cmd_help}
 
     try:
-        verbs[argv[1]](repo,argv[2:])
+        verbs[argv[1]](arguments)
     except KeyError:
         print(program_name+": "+argv[1]+" is not a "+program_name+" command. See 'git hq help'.")
+    except NoRepo as e:
+        e.message(exists)
+    except NoDesiredRepo as e:
+        e.message(exists)
 
     return 0
  
