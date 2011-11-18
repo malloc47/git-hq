@@ -26,5 +26,5 @@ def exists():
     fnull.close()
     return output
 
-def cmd(cmd,source):
-    sp.call(["git",cmd,source])
+def cmd(args):
+    sp.check_call(["git"]+args)
