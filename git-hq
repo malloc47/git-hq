@@ -150,18 +150,18 @@ def bootstrap(args):
 
 def clone(args):
     valid_argument(args['desired'],NoDesiredRepo)
-    git.cmd(['clone',args['desired'].repos[0][1]])
+    git.cmd(['clone',args['desired'].repos[0][1]]+list(args['argv']))
 
 def pull(args):
     valid_argument(args['repo'],NoRepo)
     if not args['repo'].repos: raise CmdFailed('pull',"no repos to pull from")
-    git.cmd(['pull',args['repo'].repos[0][1]])
+    git.cmd(['pull',args['repo'].repos[0][1]]+list(args['argv']))
 
 def push(args):
     valid_argument(args['repo'],NoRepo)
     if not args['repo'].repos: raise CmdFailed('push',"no repos to push from")
     for name,url in args['repo'].repos:
-        git.cmd(['push',url])
+        git.cmd(['push',url]+list(args['argv']))
 
 def main(*argv):
 
@@ -197,9 +197,9 @@ def main(*argv):
         return 1
     except CmdFailed as e:
         e.message()
-    # except:
-    #     print(program_name+": git command failed")
-    #     return 1
+    except:
+        print(program_name+": git command failed")
+        return 1
 
     return 0
  
