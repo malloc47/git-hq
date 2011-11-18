@@ -17,12 +17,14 @@ class Repo(object):
         self.repos = repos
 
 class CmdFailed(Exception):
-    def __init__(self,cmd):
+    def __init__(self,cmd,reason=None):
         self.cmd = cmd
+        if not reason is None: self.reason = reason
     def __str__(self):
         return repr(self.cmd)
     def message(self):
         print(program_name+": "+self.cmd+" command failed")
+        if hasattr(self,'reason'): print(self.reason)
 
 class NoRepo(Exception):
     def message(self,exists):
@@ -54,9 +56,12 @@ def load_config(file):
 
     for s in sections:
         p = dict(c.items(s))    # p=properties
-        repos[p['id']] = Repo(s,p['id'],
-                              [(r,remotes[r].replace("{repo}",s).replace("{uname}",p['uname']))
-                               for r in p['repos'].split(',')])
+        try:
+            remote = [(r,remotes[r].replace("{repo}",s).replace("{uname}",p['uname']))
+                      for r in p['repos'].split(',')]
+        except KeyError:
+            remote = []
+        repos[p['id']] = Repo(s,p['id'],remote)
     return repos,remotes
 
 def ammend_config(file,section,data):
@@ -102,18 +107,40 @@ def valid_argument(arg,err):
         raise err
 
 def remote(args):
-    def sub_add(remote):
-        ammend_config(config_path,'remotes',remote)
-    subcmd = {'add':sub_add}
+
+    def sub_add(subargs):
+        if len(subargs) < 2: raise CmdFailed('remote add',"too few arguments")
+        ammend_config(config_path,'remotes',(subargs[0],subargs[1]))
+
+    def sub_attach(subargs):
+        if len(subargs) < 1: raise CmdFailed('remote attach',"too few arguments")
+        valid_argument(args['repo'],NoRepo)
+        if not subargs[0] in args['remotes']: raise CmdFailed('remote attach',"remote not in config file")
+        if subargs[0] in [r[0] for r in args['repo'].repos]: raise CmdFailed('remote attach',"remote already attached")
+        ammend_config(config_path,
+                      args['repo'].name,
+                      ('repos',
+                       ','.join([r[0] for r in args['repo'].repos]+[subargs[0]])))
+
+    def sub_detach(subargs):
+        if len(subargs) < 1: raise CmdFailed('remote detach',"too few arguments")
+        valid_argument(args['repo'],NoRepo)
+        if not subargs[0] in [r[0] for r in args['repo'].repos]: raise CmdFailed('remote detach',"remote not attached")
+        ammend_config(config_path,
+                      args['repo'].name,
+                      ('repos',
+                       ','.join([r[0] for r in filter(lambda r: r[0]!=subargs[0],args['repo'].repos)])))
+
+    subcmd = {'add':sub_add, 'attach':sub_attach, 'detach':sub_detach}
     param = args['argv'] 
     if not param:
         remotes = args['remotes']
         for r in remotes:
             print(r+" "+remotes[r])
-    elif not param[0] in subcmd or len(param)<3:
+    elif not param[0] in subcmd:
         raise CmdFailed('remote')
     else:
-        subcmd[param[0]]((param[1],param[2]))
+        subcmd[param[0]](param[1:])
 
 def bootstrap(args):
     valid_argument(args['repo'],NoRepo)
@@ -127,10 +154,12 @@ def clone(args):
 
 def pull(args):
     valid_argument(args['repo'],NoRepo)
+    if not args['repo'].repos: raise CmdFailed('pull',"no repos to pull from")
     git.cmd(['pull',args['repo'].repos[0][1]])
 
 def push(args):
     valid_argument(args['repo'],NoRepo)
+    if not args['repo'].repos: raise CmdFailed('push',"no repos to push from")
     for name,url in args['repo'].repos:
         git.cmd(['push',url])
 
