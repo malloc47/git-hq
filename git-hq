@@ -131,22 +131,22 @@ def remote(args):
                       ('repos',
                        ','.join([r[0] for r in filter(lambda r: r[0]!=subargs[0],args['repo'].repos)])))
 
-    subcmd = {'add':sub_add, 'attach':sub_attach, 'detach':sub_detach}
+    def sub_commit(subargs):
+        valid_argument(args['repo'],NoRepo)
+        for name,url in args['repo'].repos:
+            print(program_name+": Adding "+name+" remote")
+            git.cmd(['remote','add',name,url])
+
+    subcmd = {'add':sub_add, 'attach':sub_attach, 'detach':sub_detach, 'commit':sub_commit}
     param = args['argv'] 
     if not param:
         remotes = args['remotes']
         for r in remotes:
             print(r+" "+remotes[r])
     elif not param[0] in subcmd:
-        raise CmdFailed('remote')
+        raise CmdFailed('remote',"subcommand not recognized")
     else:
         subcmd[param[0]](param[1:])
-
-def bootstrap(args):
-    valid_argument(args['repo'],NoRepo)
-    for name,url in args['repo'].repos:
-        print(program_name+": Adding "+name+" remote")
-        git.cmd(['remote','add',name,url])
 
 def clone(args):
     valid_argument(args['desired'],NoDesiredRepo)
@@ -185,7 +185,7 @@ def main(*argv):
 
     arguments = {'exists':exists, 'repo':repo, 'desired':desired_repo, 'remotes':remotes, 'argv':argv[2:]}
 
-    verbs = {'bootstrap':bootstrap, 'clone':clone, 'pull':pull, 'push':push, 'remote':remote, 'help':cmd_help}
+    verbs = {'clone':clone, 'pull':pull, 'push':push, 'remote':remote, 'help':cmd_help}
 
     try:
         verbs[argv[1]](arguments)
