@@ -44,7 +44,7 @@ class NoDesiredRepo(Exception):
 
 def load_config(file):
     c = cp.RawConfigParser()
-    c.read(file)
+    c.readfp(open(file))
 
     remotes = dict(c.items('remotes'))
     del remotes['uname']
@@ -63,6 +63,13 @@ def load_config(file):
             remote = []
         repos[p['id']] = Repo(s,p['id'],remote)
     return repos,remotes
+
+def create_config(file):
+    defaults = {'uname':'mysername'}
+    c = cp.RawConfigParser(defaults)
+    c.add_section("remotes")
+    with open(file, 'wb') as f:
+        c.write(f)    
 
 def ammend_config(file,section,data):
     c = cp.RawConfigParser()
@@ -96,7 +103,6 @@ repos=...""" % (program_name, git.name(), git.last_hash()) )
 def cmd_help(args=None):
     print("""usage: %s <command>
 commands available include:
-\tbootstrap
 \tclone
 \tpull
 \tpush
@@ -165,15 +171,17 @@ def push(args):
 
 def main(*argv):
 
-    if (len(argv) < 2):
-        cmd_help()
-        return 0
-
     try:
         repos,remotes = load_config(config_path)
     except IOError:
-        print("fatal: no ~/."+program_name+" config file found")
+        create_config(config_path)
+        print(program_name + " : no ~/."+program_name+" config file found")
+        print(program_name + ": creating ~/."+program_name)
         return 1
+
+    if (len(argv) < 2):
+        cmd_help()
+        return 0
 
     # check if we can even get repo info...
     exists = git.exists()
