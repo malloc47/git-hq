@@ -106,6 +106,7 @@ commands available include:
 \tclone
 \tpull
 \tpush
+\tremote
 \thelp""" % program_name)
 
 def valid_argument(arg,err):
@@ -191,9 +192,17 @@ def main(*argv):
     desired_repo = (identify_desired_repo(repos,argv[2]) if 
                     (len(argv) > 2) else None)
 
-    arguments = {'exists':exists, 'repo':repo, 'desired':desired_repo, 'remotes':remotes, 'argv':argv[2:]}
+    arguments = {'exists' : exists, 
+                 'repo'   : repo, 
+                 'desired': desired_repo, 
+                 'remotes': remotes, 
+                 'argv'   : argv[2:]}
 
-    verbs = {'clone':clone, 'pull':pull, 'push':push, 'remote':remote, 'help':cmd_help}
+    verbs = {'clone'  : clone, 
+             'pull'   : pull, 
+             'push'   : push, 
+             'remote' : remote, 
+             'help'   : cmd_help}
 
     try:
         verbs[argv[1]](arguments)
