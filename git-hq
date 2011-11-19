@@ -71,10 +71,19 @@ def create_config(file):
     with open(file, 'wb') as f:
         c.write(f)    
 
-def ammend_config(file,section,data):
+def ammend_property_config(file,section,data):
     c = cp.RawConfigParser()
     c.read(file)
     c.set(section,data[0],data[1])
+    with open(file, 'wb') as f:
+        c.write(f)
+
+def ammend_section_config(file,section,data):
+    c = cp.RawConfigParser()
+    c.read(file)
+    c.add_section(section)
+    for d in data:
+        c.set(section,d[0],d[1])
     with open(file, 'wb') as f:
         c.write(f)
 
@@ -104,6 +113,7 @@ def cmd_help(args=None):
     print("""usage: %s <command>
 commands available include:
 \tclone
+\tinit
 \tpull
 \tpush
 \tremote
@@ -117,14 +127,14 @@ def remote(args):
 
     def sub_add(subargs):
         if len(subargs) < 2: raise CmdFailed('remote add',"too few arguments")
-        ammend_config(config_path,'remotes',(subargs[0],subargs[1]))
+        ammend_property_config(config_path,'remotes',(subargs[0],subargs[1]))
 
     def sub_attach(subargs):
         if len(subargs) < 1: raise CmdFailed('remote attach',"too few arguments")
         valid_argument(args['repo'],NoRepo)
         if not subargs[0] in args['remotes']: raise CmdFailed('remote attach',"remote not in config file")
         if subargs[0] in [r[0] for r in args['repo'].repos]: raise CmdFailed('remote attach',"remote already attached")
-        ammend_config(config_path,
+        ammend_property_config(config_path,
                       args['repo'].name,
                       ('repos',
                        ','.join([r[0] for r in args['repo'].repos]+[subargs[0]])))
@@ -133,7 +143,7 @@ def remote(args):
         if len(subargs) < 1: raise CmdFailed('remote detach',"too few arguments")
         valid_argument(args['repo'],NoRepo)
         if not subargs[0] in [r[0] for r in args['repo'].repos]: raise CmdFailed('remote detach',"remote not attached")
-        ammend_config(config_path,
+        ammend_property_config(config_path,
                       args['repo'].name,
                       ('repos',
                        ','.join([r[0] for r in filter(lambda r: r[0]!=subargs[0],args['repo'].repos)])))
@@ -170,6 +180,14 @@ def push(args):
     for name,url in args['repo'].repos:
         git.cmd(['push',url]+list(args['argv']))
 
+def init(args):
+    try:
+        repo_name = args['argv'][0] if len(args['argv']) > 0 else git.name()
+        ammend_section_config(config_path,repo_name,[('id',git.last_hash()),
+                                                     ('repos','')])
+    except cp.DuplicateSectionError:
+        raise CmdFailed('init',"repo already in config file")
+
 def main(*argv):
 
     try:
@@ -192,16 +210,17 @@ def main(*argv):
     desired_repo = (identify_desired_repo(repos,argv[2]) if 
                     (len(argv) > 2) else None)
 
-    arguments = {'exists' : exists, 
-                 'repo'   : repo, 
-                 'desired': desired_repo, 
-                 'remotes': remotes, 
+    arguments = {'exists' : exists,
+                 'repo'   : repo,
+                 'desired': desired_repo,
+                 'remotes': remotes,
                  'argv'   : argv[2:]}
 
-    verbs = {'clone'  : clone, 
-             'pull'   : pull, 
-             'push'   : push, 
-             'remote' : remote, 
+    verbs = {'clone'  : clone,
+             'init'   : init,
+             'pull'   : pull,
+             'push'   : push,
+             'remote' : remote,
              'help'   : cmd_help}
 
     try:
