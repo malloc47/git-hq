@@ -32,8 +32,7 @@ class NoRepo(Exception):
             print(program_name+": git repository not in config file")
             suggest()
         else:
-            print(program_name+": no repository found or not in config file")
-    
+            print(program_name+": no repository found or not in config file")    
 
 class NoDesiredRepo(Exception):
     def message(self,exists):
@@ -43,7 +42,7 @@ class NoDesiredRepo(Exception):
             print(program_name+": repository not in config file")
 
 def load_config(file):
-    c = cp.RawConfigParser()
+    c = cp.ConfigParser()
     c.readfp(open(file))
 
     remotes = dict(c.items('remotes'))
@@ -57,7 +56,7 @@ def load_config(file):
     for s in sections:
         p = dict(c.items(s))    # p=properties
         try:
-            remote = [(r,remotes[r].replace("{repo}",s).replace("{uname}",p['uname']))
+            remote = [(r,remotes[r].replace("{repo}",s))# .replace("{uname}",p['uname']))
                       for r in p['repos'].split(',')]
         except KeyError:
             remote = []
@@ -66,20 +65,20 @@ def load_config(file):
 
 def create_config(file):
     defaults = {'uname':'mysername'}
-    c = cp.RawConfigParser(defaults)
+    c = cp.ConfigParser(defaults)
     c.add_section("remotes")
     with open(file, 'w') as f:
         c.write(f)    
 
 def ammend_property_config(file,section,data):
-    c = cp.RawConfigParser()
+    c = cp.ConfigParser()
     c.read(file)
     c.set(section,data[0],data[1])
     with open(file, 'w') as f:
         c.write(f)
 
 def ammend_section_config(file,section,data):
-    c = cp.RawConfigParser()
+    c = cp.ConfigParser()
     c.read(file)
     c.add_section(section)
     for d in data:
@@ -88,7 +87,7 @@ def ammend_section_config(file,section,data):
         c.write(f)
 
 def remove_section_config(file,section):
-    c = cp.RawConfigParser()
+    c = cp.ConfigParser()
     c.read(file)
     c.remove_section(section)
     with open(file, 'w') as f:
