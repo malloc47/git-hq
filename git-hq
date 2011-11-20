@@ -178,15 +178,26 @@ def clone(args):
     git.cmd(['clone',args['desired'].repos[0][1]]+list(args['argv']))
 
 def pull(args):
-    valid_argument(args['repo'],NoRepo)
-    if not args['repo'].repos: raise CmdFailed('pull',"no repos to pull from")
-    git.cmd(['pull',args['repo'].repos[0][1]]+list(args['argv']))
+    cmd_on_repos('pull',args['repo'],list(args['argv']))
 
 def push(args):
-    valid_argument(args['repo'],NoRepo)
-    if not args['repo'].repos: raise CmdFailed('push',"no repos to push from")
-    for name,url in args['repo'].repos:
-        git.cmd(['push',url]+list(args['argv']))
+    cmd_on_repos('push',args['repo'],list(args['argv']))
+
+def cmd_on_repos(cmd,repo,argv):
+    valid_argument(repo,NoRepo)
+    # intercept recognized repo shorthand
+    requested_repos = [x for x in argv if x in [r[0] for r in repo.repos]]
+    # remove from arguments handed off to git
+    for r in requested_repos:
+        argv.remove(r)
+    repo_list = [r for r in repo.repos if r[0] in requested_repos] \
+        if requested_repos else repo.repos
+    if '-o' in argv:            # -o = only first repo
+        argv.remove('-o')
+        repo_list = [repo_list[0]]
+    if not repo.repos: raise CmdFailed(cmd,"no repos to "+cmd+" from")
+    for name,url in repo_list:
+            git.cmd([cmd,url]+argv)
 
 def init(args):
     try:
