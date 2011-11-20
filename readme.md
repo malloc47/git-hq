@@ -19,12 +19,12 @@ without having to do the usual routine of looking up the remote urls. Any repo k
 
 As with git itself, `git-hq` uses a human-readable config file format (parsed using python's configparser library), and also allows remotes/repositories to be added via simple commands:
 
-   git hq remote add github git@github.com:username/{repo}.git
-   cd path/to/git/repo/
-   git hq init		# git-hq now knows about this repo  
-   git hq attach github	# the remote added above is now associated  
-   git hq push	 	# push to the repo above  
-   git hq remote commit	# "bake in" the repos in git-hq into git's config file  
+	git hq remote add github git@github.com:username/{repo}.git
+	cd path/to/git/repo/
+	git hq init		# git-hq now knows about this repo  
+	git hq attach github	# the remote added above is now associated  
+	git hq push	 	# push to the repo above  
+	git hq remote commit	# "bake in" the repos in git-hq into git's config file  
 
 ## Features
 
