@@ -68,14 +68,14 @@ def create_config(file):
     defaults = {'uname':'mysername'}
     c = cp.RawConfigParser(defaults)
     c.add_section("remotes")
-    with open(file, 'wb') as f:
+    with open(file, 'w') as f:
         c.write(f)    
 
 def ammend_property_config(file,section,data):
     c = cp.RawConfigParser()
     c.read(file)
     c.set(section,data[0],data[1])
-    with open(file, 'wb') as f:
+    with open(file, 'w') as f:
         c.write(f)
 
 def ammend_section_config(file,section,data):
@@ -84,7 +84,14 @@ def ammend_section_config(file,section,data):
     c.add_section(section)
     for d in data:
         c.set(section,d[0],d[1])
-    with open(file, 'wb') as f:
+    with open(file, 'w') as f:
+        c.write(f)
+
+def remove_section_config(file,section):
+    c = cp.RawConfigParser()
+    c.read(file)
+    c.remove_section(section)
+    with open(file, 'w') as f:
         c.write(f)
 
 def identify_current_repo(repos):
@@ -114,6 +121,7 @@ def cmd_help(args=None):
 commands available include:
 \tclone
 \tinit
+\tpurge
 \tpull
 \tpush
 \tremote
@@ -189,6 +197,12 @@ def init(args):
     except cp.DuplicateSectionError:
         raise CmdFailed('init',"repo already in config file")
 
+def purge(args):
+    if args['repo'] is None and not args['argv']:
+        raise CmdFailed('purge',"repo not specified")
+    section_to_remove = args['argv'][0] if args['repo'] else args['repo'].name
+    remove_section_config(config_path,section_to_remove)
+
 def main(*argv):
 
     try:
@@ -219,6 +233,7 @@ def main(*argv):
 
     verbs = {'clone'  : clone,
              'init'   : init,
+             'purge'  : purge,
              'pull'   : pull,
              'push'   : push,
              'remote' : remote,
