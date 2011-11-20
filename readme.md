@@ -1,5 +1,5 @@
 # git-hq
-A global remote manager for git
+A remote manager for git
 
 ## Use Cases
 Have lots of git repos everywhere? Have lots of machines you work on? Have lots of remotes for each repo?
@@ -8,25 +8,23 @@ By design, git does not keep track of your remotes, and other assorted informati
 
 `git-hq` references a global config file, `~/.git-hq` to lookup remote information that may not be found in the repository's local config file. All you need do is synchronize `git-hq`'s global config file (if you keep your dotfiles in a repository, this is easy), and any machine you're on can instantly clone known repositories
 
-```git hq clone [repo-name]```
+	 git hq clone [repo-name]
 
 without having to do the usual routine of looking up the remote urls. Any repo known to `git-hq`'s config file can push or pull to all of its listed repositories (or named ones, using a simple name alias), even if they are not in the repo's individual config file
 
-```git hq push
-git hq pull  
-git hq push github bitbucket  
-git hq pull gitorious  
-```
+	git hq push
+	git hq pull  
+	git hq push github bitbucket  
+	git hq pull gitorious  
 
 As with git itself, `git-hq` uses a human-readable config file format (parsed using python's configparser library), and also allows remotes/repositories to be added via simple commands:
 
-```git hq remote add github git@github.com:username/{repo}.git
-cd path/to/git/repo/
-git hq init		# git-hq now knows about this repo  
-git hq attach github	# the remote added above is now associated  
-git hq push   		# push to the repo above  
-git hq remote commit    # "bake in" the repos in git-hq into git's config file  
-```
+   git hq remote add github git@github.com:username/{repo}.git
+   cd path/to/git/repo/
+   git hq init		# git-hq now knows about this repo  
+   git hq attach github	# the remote added above is now associated  
+   git hq push	 	# push to the repo above  
+   git hq remote commit	# "bake in" the repos in git-hq into git's config file  
 
 ## Features
 
