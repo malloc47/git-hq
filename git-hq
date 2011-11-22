@@ -180,15 +180,12 @@ def clone(args):
     valid_argument(desired_repo,NoDesiredRepo)
     git.cmd(['clone',desired_repo.repos[0][1]]+list(args['argv'][1:]))
 
-def pull(args):
-    cmd_on_repos('pull',args['repo'],list(args['argv']))
-
-def push(args):
-    cmd_on_repos('push',args['repo'],list(args['argv']))
-
-def cmd_on_repos(cmd,repo,argv):
+def push_pull(args):
+    argv = list(args['argv'])
+    cmd = args['cmd']
+    repo = args['repo']
     valid_argument(repo,NoRepo)
-    # intercept recognized repo shorthand
+    # intercept recognized repo name
     requested_repos = [x for x in argv if x in [r[0] for r in repo.repos]]
     # remove from arguments handed off to git
     for r in requested_repos:
@@ -240,13 +237,14 @@ def main(*argv):
                  'repo'   : repo,
                  'repos'  : repos,
                  'remotes': remotes,
+                 'cmd'    : argv[1],
                  'argv'   : argv[2:]}
 
     verbs = {'clone'  : clone,
              'init'   : init,
              'purge'  : purge,
-             'pull'   : pull,
-             'push'   : push,
+             'pull'   : push_pull,
+             'push'   : push_pull,
              'remote' : remote,
              'help'   : cmd_help}
 
