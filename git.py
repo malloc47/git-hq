@@ -3,7 +3,9 @@ import subprocess as sp
 
 def hashes():
     try:
-        return sp.check_output(["git","log","--pretty=format:%H"]).decode("utf-8").split('\n') # todo: reverse this, since we generally store the last hash
+        output = sp.check_output(["git","log","--pretty=format:%H"]).decode("utf-8").split('\n')
+        output.reverse()
+        return output
     except sp.CalledProcessError:
         return []
 
