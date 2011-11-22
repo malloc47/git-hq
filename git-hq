@@ -56,7 +56,7 @@ def load_config(file):
     for s in sections:
         p = dict(c.items(s))    # p=properties
         try:
-            remote = [(r,remotes[r].replace("{repo}",s))# .replace("{uname}",p['uname']))
+            remote = [(r,remotes[r].replace("{repo}",s.lower()))# .replace("{uname}",p['uname']))
                       for r in p['repos'].split(',')]
         except KeyError:
             remote = []
