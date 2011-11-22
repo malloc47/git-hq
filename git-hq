@@ -103,6 +103,7 @@ def identify_desired_repo(repos,name):
     try:
         return next(r for k,r in repos.items() if r.name==name)
     except StopIteration:
+        raise CmdFailed('clone',"repo not in config file")
         return None
 
 def suggest():
@@ -173,8 +174,11 @@ def remote(args):
         subcmd[param[0]](param[1:])
 
 def clone(args):
-    valid_argument(args['desired'],NoDesiredRepo)
-    git.cmd(['clone',args['desired'].repos[0][1]]+list(args['argv']))
+    if len(args['argv']) < 1:
+        raise CmdFailed('clone',"no repository specified")
+    desired_repo = identify_desired_repo(args['repos'],args['argv'][0])
+    valid_argument(desired_repo,NoDesiredRepo)
+    git.cmd(['clone',desired_repo.repos[0][1]]+list(args['argv'][1:]))
 
 def pull(args):
     cmd_on_repos('pull',args['repo'],list(args['argv']))
@@ -231,13 +235,10 @@ def main(*argv):
     exists = git.exists()
     # obtain repo info if so
     repo = identify_current_repo(repos) if exists else None
-    # if user was trying to create a repo, look it up in config
-    desired_repo = (identify_desired_repo(repos,argv[2]) if 
-                    (len(argv) > 2) else None)
 
     arguments = {'exists' : exists,
                  'repo'   : repo,
-                 'desired': desired_repo,
+                 'repos'  : repos,
                  'remotes': remotes,
                  'argv'   : argv[2:]}
 
