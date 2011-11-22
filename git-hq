@@ -101,7 +101,7 @@ def identify_current_repo(repos):
 
 def identify_desired_repo(repos,name):
     try:
-        return next(r for k,r in repos.items() if r.name==name)
+        return next(r for k,r in repos.items() if r.name.lower()==name.lower())
     except StopIteration:
         raise CmdFailed('clone',"repo not in config file")
         return None
