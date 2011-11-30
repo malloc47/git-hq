@@ -43,7 +43,8 @@ def name():
 def exists():
     # trick so we don't see output
     fnull = open(os.devnull, 'w')
-    output = not sp.call(["git","rev-parse","--git-dir"], stdout = fnull, stderr = fnull)
+    output = not sp.call(["git","rev-parse","--git-dir"], stdout = fnull, 
+                         stderr = fnull)
     fnull.close()
     return output
 
