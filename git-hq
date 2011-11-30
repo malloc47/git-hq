@@ -32,7 +32,7 @@ class NoRepo(Exception):
             print(program_name+": git repository not in config file")
             suggest()
         else:
-            print(program_name+": no repository found or not in config file")    
+            print(program_name+": no repository found or not in config file")
 
 class NoDesiredRepo(Exception):
     def message(self,exists):
@@ -50,13 +50,13 @@ def load_config(file):
 
     sections = c.sections()
     sections.remove('remotes')
-    
+
     repos = {}
 
     for s in sections:
         p = dict(c.items(s))    # p=properties
         try:
-            remote = [(r,remotes[r].replace("{repo}",s.lower()))# .replace("{uname}",p['uname']))
+            remote = [(r,remotes[r].replace("{repo}",s.lower()))
                       for r in p['repos'].split(',')]
         except KeyError:
             remote = []
@@ -68,7 +68,7 @@ def create_config(file):
     c = cp.ConfigParser(defaults)
     c.add_section("remotes")
     with open(file, 'w') as f:
-        c.write(f)    
+        c.write(f)
 
 def ammend_property_config(file,section,data):
     c = cp.ConfigParser()
@@ -163,7 +163,7 @@ def remote(args):
             git.cmd(['remote','add',name,url])
 
     subcmd = {'add':sub_add, 'attach':sub_attach, 'detach':sub_detach, 'commit':sub_commit}
-    param = args['argv'] 
+    param = args['argv']
     if not param:
         remotes = args['remotes']
         for r in remotes:
@@ -263,6 +263,6 @@ def main(*argv):
         return 1
 
     return 0
- 
+
 if __name__ == '__main__':
     sys.exit(main(*sys.argv))
