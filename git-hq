@@ -77,6 +77,14 @@ def ammend_property_config(file,section,data):
     with open(file, 'w') as f:
         c.write(f)
 
+def remove_property_config(file,section,data):
+    c = cp.ConfigParser()
+    c.read(file)
+    if not c.remove_option(section,data):
+        raise CmdFailed('remove_property',"property not found in config file")
+    with open(file, 'w') as f:
+        c.write(f)
+
 def ammend_section_config(file,section,data):
     c = cp.ConfigParser()
     c.read(file)
@@ -89,7 +97,8 @@ def ammend_section_config(file,section,data):
 def remove_section_config(file,section):
     c = cp.ConfigParser()
     c.read(file)
-    c.remove_section(section)
+    if not c.remove_section(section):
+        raise CmdFailed('remove_section',"section not found in config file")
     with open(file, 'w') as f:
         c.write(f)
 
@@ -137,6 +146,10 @@ def remote(args):
         if len(args['argv']) < 2: raise CmdFailed('remote add',"too few arguments")
         ammend_property_config(config_path,'remotes',(args['argv'][0],args['argv'][1]))
 
+    def sub_delete(args):
+        if len(args['argv']) < 1: raise CmdFailed('remote delete',"too few arguments")
+        remove_property_config(config_path,'remotes',args['argv'][0])
+
     def sub_attach(args):
         if len(args['argv']) < 1: raise CmdFailed('remote attach',"too few arguments")
         valid_argument(args['repo'],NoRepo)
@@ -162,7 +175,7 @@ def remote(args):
             print(program_name+": Adding "+name+" remote")
             git.cmd(['remote','add',name,url])
 
-    subcmd = {'add':sub_add, 'attach':sub_attach, 'detach':sub_detach, 'commit':sub_commit}
+    subcmd = {'add':sub_add, 'delete':sub_delete, 'attach':sub_attach, 'detach':sub_detach, 'commit':sub_commit}
     param = args['argv']
     if not param:
         remotes = args['remotes']
