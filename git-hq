@@ -133,30 +133,30 @@ def valid_argument(arg,err):
 
 def remote(args):
 
-    def sub_add(subargs):
-        if len(subargs) < 2: raise CmdFailed('remote add',"too few arguments")
-        ammend_property_config(config_path,'remotes',(subargs[0],subargs[1]))
+    def sub_add(args):
+        if len(args['argv']) < 2: raise CmdFailed('remote add',"too few arguments")
+        ammend_property_config(config_path,'remotes',(args['argv'][0],args['argv'][1]))
 
-    def sub_attach(subargs):
-        if len(subargs) < 1: raise CmdFailed('remote attach',"too few arguments")
+    def sub_attach(args):
+        if len(args['argv']) < 1: raise CmdFailed('remote attach',"too few arguments")
         valid_argument(args['repo'],NoRepo)
-        if not subargs[0] in args['remotes']: raise CmdFailed('remote attach',"remote not in config file")
-        if subargs[0] in [r[0] for r in args['repo'].repos]: raise CmdFailed('remote attach',"remote already attached")
+        if not args['argv'][0] in args['remotes']: raise CmdFailed('remote attach',"remote not in config file")
+        if args['argv'][0] in [r[0] for r in args['repo'].repos]: raise CmdFailed('remote attach',"remote already attached")
         ammend_property_config(config_path,
                       args['repo'].name,
                       ('repos',
-                       ','.join([r[0] for r in args['repo'].repos]+[subargs[0]])))
+                       ','.join([r[0] for r in args['repo'].repos]+[args['argv'][0]])))
 
-    def sub_detach(subargs):
-        if len(subargs) < 1: raise CmdFailed('remote detach',"too few arguments")
+    def sub_detach(args):
+        if len(args['argv']) < 1: raise CmdFailed('remote detach',"too few arguments")
         valid_argument(args['repo'],NoRepo)
-        if not subargs[0] in [r[0] for r in args['repo'].repos]: raise CmdFailed('remote detach',"remote not attached")
+        if not args['argv'][0] in [r[0] for r in args['repo'].repos]: raise CmdFailed('remote detach',"remote not attached")
         ammend_property_config(config_path,
                       args['repo'].name,
                       ('repos',
-                       ','.join([r[0] for r in filter(lambda r: r[0]!=subargs[0],args['repo'].repos)])))
+                       ','.join([r[0] for r in filter(lambda r: r[0]!=args['argv'][0],args['repo'].repos)])))
 
-    def sub_commit(subargs):
+    def sub_commit(args):
         valid_argument(args['repo'],NoRepo)
         for name,url in args['repo'].repos:
             print(program_name+": Adding "+name+" remote")
@@ -171,7 +171,8 @@ def remote(args):
     elif not param[0] in subcmd:
         raise CmdFailed('remote',"subcommand not recognized")
     else:
-        subcmd[param[0]](param[1:])
+        args['argv'] = param[1:]
+        subcmd[param[0]](args)
 
 def clone(args):
     if len(args['argv']) < 1:
