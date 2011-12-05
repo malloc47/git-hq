@@ -1,4 +1,18 @@
 #!/usr/bin/env python
+"""
+git-hq: globally manage git remotes with a single config file
+
+Manages git remotes through a simple git-like syntax with a
+traditional git-like config file.
+
+sample usage:
+git hq remote add github git@github.com:username/{repo}.git
+git hq init
+git hq attach github
+git hq push master
+git hq pull
+"""
+
 import sys,os
 try:
     import configparser as cp
@@ -6,6 +20,14 @@ except:
     import ConfigParser as cp   # python 2.x
 #sys.path.insert(0,os.getcwd())
 import git
+
+__author__ = "Jarrell Waggoner"
+__copyright__ = "Copyright 2011"
+__credits__ = ["Jarrell Waggoner"]
+__license__ = "BSD"
+__version__ = "1.0"
+__maintainer__ = "Jarrell Waggoner"
+__email__ = "jarrell.waggoner@gmail.com"
 
 program_name = "git-hq"
 config_path = os.getenv("HOME")+"/."+program_name
