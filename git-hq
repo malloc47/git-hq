@@ -23,7 +23,7 @@ import git
 
 __author__ = "Jarrell Waggoner"
 __copyright__ = "Copyright 2011"
-__credits__ = ["Jarrell Waggoner"]
+__credits__ = ["Jarrell Waggoner", "Andrew Temlyakov"]
 __license__ = "BSD"
 __version__ = "1.0"
 __maintainer__ = "Jarrell Waggoner"
