@@ -50,6 +50,30 @@ Testing has been done with both Python 2.7 and Python 3, though `configparser` (
 
 For remote names, the special `{repo}` string will always be substituted with the name of the repository, which is found by the top-level directory name of the project. If you have a repo that has a different remote name than the director in which it is stored, you can simply omit the `{repo}` and include the full remote string, but this remote will not work with other repositories. In addition, `configparser` provides a `$(variablename)s` syntax (note the "s" at the end) that will substitute a variable declared either in the same section, or in the [DEFAULT] section. This can be used for user names or host names to reduce the amount of typing.
 
+## License
+
+Copyright 2011 Jarrell Waggoner. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are
+permitted provided that the following conditions are met:
+
+   1. Redistributions of source code must retain the above copyright notice, this list of
+      conditions and the following disclaimer.
+
+   2. Redistributions in binary form must reproduce the above copyright notice, this list
+      of conditions and the following disclaimer in the documentation and/or other materials
+      provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY JARRELL WAGGONER ''AS IS'' AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL JARRELL WAGGONER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 ---
 
 Jarrell Waggoner  
