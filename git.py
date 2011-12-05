@@ -1,3 +1,9 @@
+""" 
+Simple shell-based git binding module
+
+Placeholder until libgit2 is more mature and pervasive
+"""
+
 import os
 import subprocess as sp
 
