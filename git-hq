@@ -48,7 +48,7 @@ class NoRepo(Exception):
         if exists:
             sys.stderr.write(program_name+
                              ": git repository not in config file\n")
-            suggest()
+            # suggest()
         else:
             sys.stderr.write(program_name+
                              ": no repository found or not in config file\n")
@@ -63,12 +63,14 @@ class NoDesiredRepo(Exception):
                              ": repository not in config file\n")
 
 def identify_current_repo(repos):
+    """compare all the hashes in the current repo to the repos dict"""
     for h in git.hashes():
-        if(h in repos):
+        if h in repos:
             return repos[h]
     return None
 
 def identify_desired_repo(repos,name):
+    """find a specified repo by (lowercase) name"""
     try:
         return next(r for k,r in repos.items() if r.name.lower()==name.lower())
     except StopIteration:
@@ -76,16 +78,21 @@ def identify_desired_repo(repos,name):
         return None
 
 def suggest():
+    """suggest that the user add the repo to their config file"""
     try:
-        print("""Add the following to ~/.%s to include this repo
-[%s]
-id=%s
-repos=...""" % (program_name, git.name(), git.last_hash()) )
+#         print("""Add the following to ~/.%s to include this repo
+# [%s]
+# id=%s
+# repos=...""" % (program_name, git.name(), git.last_hash()) )
+        print("""repo not found in config file: run
+\tgit hq init
+to add repo to git-hq""")
     except:
         print("""Add repo information to ~/.%s or run in existing repository""" %
               program_name)
 
 def cmd_help(args=None):
+    """print help information"""
     print("""usage: %s <command>
 commands available include:
 \tclone
@@ -94,14 +101,17 @@ commands available include:
 \tpull
 \tpush
 \tremote
+\tpath
+\trun
 \thelp""" % program_name)
 
 def valid_argument(arg,err):
+    """shorthand to save on ugly code"""
     if arg is None:
         raise err
 
 def remote(args):
-
+    """subcommand to manage remotes"""
     def sub_add(args):
         if len(args['argv']) < 2: raise CmdFailed('remote add',"too few arguments")
         config.ammend_property_config(config_path,'remotes',(args['argv'][0],args['argv'][1]))
