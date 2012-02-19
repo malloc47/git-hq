@@ -14,12 +14,13 @@ git hq pull
 """
 
 import sys,os
-try:
-    import configparser as cp
-except:
-    import ConfigParser as cp   # python 2.x
+# try:
+#     import configparser as cp
+# except:
+#     import ConfigParser as cp   # python 2.x
 #sys.path.insert(0,os.getcwd())
 import git
+import config
 
 __author__ = "Jarrell Waggoner"
 __copyright__ = "Copyright 2011"
@@ -31,14 +32,6 @@ __email__ = "jarrell.waggoner@gmail.com"
 
 program_name = "git-hq"
 config_path = os.getenv("HOME")+"/."+program_name
-
-class Repo(object):
-    """object to store relevant information about a repo"""
-    def __init__(self,name,id,repos,path=None):
-        self.name = name
-        self.id = id
-        self.repos = repos
-        self.path = path
 
 class CmdFailed(Exception):
     def __init__(self,cmd,reason=None):
@@ -68,74 +61,6 @@ class NoDesiredRepo(Exception):
         else:
             sys.stderr.write(program_name+
                              ": repository not in config file\n")
-
-def load_config(file):
-    c = cp.ConfigParser()
-    c.readfp(open(file))
-
-    remotes = dict(c.items('remotes'))
-    del remotes['uname']
-
-    sections = c.sections()
-    sections.remove('remotes')
-
-    repos = {}
-
-    for s in sections:
-        p = dict(c.items(s))    # p=properties
-        try:
-            remote = [(r,remotes[r]. \
-                           replace("{repo}",s.lower()). \
-                           replace("{REPO}",s.upper()). \
-                           replace("{Repo}",s))
-                      for r in p['repos'].split(',')]
-        except KeyError:
-            remote = []
-        try:
-            path = p['path']
-        except KeyError:
-            path = None
-        repos[p['id']] = Repo(s,p['id'],remote,path)
-    return repos,remotes
-
-def create_config(file):
-    defaults = {'uname':'mysername'}
-    c = cp.ConfigParser(defaults)
-    c.add_section("remotes")
-    with open(file, 'w') as f:
-        c.write(f)
-
-def ammend_property_config(file,section,data):
-    c = cp.ConfigParser()
-    c.read(file)
-    c.set(section,data[0],data[1])
-    with open(file, 'w') as f:
-        c.write(f)
-
-def remove_property_config(file,section,data):
-    c = cp.ConfigParser()
-    c.read(file)
-    if not c.remove_option(section,data):
-        raise CmdFailed('remove_property',"property not found in config file")
-    with open(file, 'w') as f:
-        c.write(f)
-
-def ammend_section_config(file,section,data):
-    c = cp.ConfigParser()
-    c.read(file)
-    c.add_section(section)
-    for d in data:
-        c.set(section,d[0],d[1])
-    with open(file, 'w') as f:
-        c.write(f)
-
-def remove_section_config(file,section):
-    c = cp.ConfigParser()
-    c.read(file)
-    if not c.remove_section(section):
-        raise CmdFailed('remove_section',"section not found in config file")
-    with open(file, 'w') as f:
-        c.write(f)
 
 def identify_current_repo(repos):
     for h in git.hashes():
@@ -179,18 +104,18 @@ def remote(args):
 
     def sub_add(args):
         if len(args['argv']) < 2: raise CmdFailed('remote add',"too few arguments")
-        ammend_property_config(config_path,'remotes',(args['argv'][0],args['argv'][1]))
+        config.ammend_property_config(config_path,'remotes',(args['argv'][0],args['argv'][1]))
 
     def sub_delete(args):
         if len(args['argv']) < 1: raise CmdFailed('remote delete',"too few arguments")
-        remove_property_config(config_path,'remotes',args['argv'][0])
+        config.remove_property_config(config_path,'remotes',args['argv'][0])
 
     def sub_attach(args):
         if len(args['argv']) < 1: raise CmdFailed('remote attach',"too few arguments")
         valid_argument(args['repo'],NoRepo)
         if not args['argv'][0] in args['remotes']: raise CmdFailed('remote attach',"remote not in config file")
         if args['argv'][0] in [r[0] for r in args['repo'].repos]: raise CmdFailed('remote attach',"remote already attached")
-        ammend_property_config(config_path,
+        config.ammend_property_config(config_path,
                       args['repo'].name,
                       ('repos',
                        ','.join([r[0] for r in args['repo'].repos]+[args['argv'][0]])))
@@ -199,7 +124,7 @@ def remote(args):
         if len(args['argv']) < 1: raise CmdFailed('remote detach',"too few arguments")
         valid_argument(args['repo'],NoRepo)
         if not args['argv'][0] in [r[0] for r in args['repo'].repos]: raise CmdFailed('remote detach',"remote not attached")
-        ammend_property_config(config_path,
+        config.ammend_property_config(config_path,
                       args['repo'].name,
                       ('repos',
                        ','.join([r[0] for r in filter(lambda r: r[0]!=args['argv'][0],args['repo'].repos)])))
@@ -254,7 +179,7 @@ def push_pull(args):
 def init(args):
     try:
         repo_name = args['argv'][0] if len(args['argv']) > 0 and not args['argv'][0] in args['remotes'] else git.name()
-        ammend_section_config(config_path,repo_name,[('id',git.last_hash()),
+        config.ammend_section_config(config_path,repo_name,[('id',git.last_hash()),
                                                      ('repos',
                                                       ','.join([x for x in args['argv'] if x in args['remotes']])),
                                                      ('path',git.path())])
@@ -265,7 +190,7 @@ def purge(args):
     if args['repo'] is None and not args['argv']:
         raise CmdFailed('purge',"repo not specified")
     section_to_remove = args['argv'][0] if args['repo'] else args['repo'].name
-    remove_section_config(config_path,section_to_remove)
+    config.remove_section_config(config_path,section_to_remove)
 
 def run_cmd(args):
     # failure cases
@@ -310,7 +235,7 @@ def path_cmd(args):
     if not args['argv'] and not args['repo'].path is None:
         print(args['repo'].path)
     elif args['argv']:
-        ammend_property_config(config_path,
+        config.ammend_property_config(config_path,
                                args['repo'].name,
                                ('path',' '.join(args['argv'])))
     else:
@@ -329,9 +254,9 @@ verbs = {'clone'  : clone,
 def main(*argv):
 
     try:
-        repos,remotes = load_config(config_path)
+        repos,remotes = config.load_config(config_path)
     except IOError:
-        create_config(config_path)
+        config.create_config(config_path)
         print(program_name + " : no ~/."+program_name+" config file found")
         print(program_name + ": creating ~/."+program_name)
         return 1
