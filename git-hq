@@ -208,7 +208,7 @@ def remote(args):
         valid_argument(args['repo'],NoRepo)
         for name,url in args['repo'].repos:
             print(program_name+": Adding "+name+" remote")
-            git.cmd(['remote','add',name,url])
+            git.cmd(['remote','add',name,url],path=args['cwd'])
 
     subcmd = {'add':sub_add, 'delete':sub_delete, 'attach':sub_attach, 'detach':sub_detach, 'commit':sub_commit}
     param = args['argv']
@@ -246,7 +246,10 @@ def push_pull(args):
         repo_list = [repo_list[0]]
     if not repo.repos: raise CmdFailed(cmd,"no repos to "+cmd+" from")
     for name,url in repo_list:
-            git.cmd([cmd,url]+argv)
+        try:
+            git.cmd([cmd,url]+argv,path=args['cwd'])
+        except:
+            CmdFailed(cmd,"command failed")
 
 def init(args):
     try:
@@ -265,20 +268,34 @@ def purge(args):
     remove_section_config(config_path,section_to_remove)
 
 def run_cmd(args):
+    # failure cases
     if not args['repos']: 
         raise CmdFailed('run',"no repos in config file")
+    if not args['argv']:
+        raise CmdFailed('run',"no command specified")
+    # loop over all repos
     for r in args['repos'].values():
-        if not r.path is None:
-            if not os.path.isdir(r.path):
-                print("#"+r.name+": not checkout out")
-            else:
-                try:
-                    print("#"+r.name)
-                    git.cmd(list(args['argv']),r.path)
-                except IOError:
-                    sys.stderr.write("#"+r.name+": not checkout out\n")
-        else:
+        # failure cases for individual repo
+        if r.path is None:
             print("#"+r.name+": no path defined for repository")
+        elif not os.path.isdir(r.path):
+            print("#"+r.name+": not checkout out")
+        # run git-hq'ed command
+        elif args['argv'][0] in verbs:
+            print("#"+r.name)
+            new_args         = args.copy()
+            new_args['repo'] = r
+            new_args['cmd']  = args['argv'][0]
+            new_args['argv'] = args['argv'][1:]
+            new_args['cwd']  = r.path
+            verbs[new_args['cmd']](new_args)
+        # run pass-through command
+        else:
+            try:
+                print("#"+r.name)
+                git.cmd(list(args['argv']),r.path)
+            except IOError:
+                sys.stderr.write("#"+r.name+": not checkout out\n")
 
 def path_cmd(args):
     if args['repo'] is None:
@@ -298,6 +315,16 @@ def path_cmd(args):
                                ('path',' '.join(args['argv'])))
     else:
         raise CmdFailed('path',"no path specified")
+
+verbs = {'clone'  : clone,
+         'init'   : init,
+         'purge'  : purge,
+         'pull'   : push_pull,
+         'push'   : push_pull,
+         'remote' : remote,
+         'run'    : run_cmd,
+         'path'   : path_cmd,
+         'help'   : cmd_help}
 
 def main(*argv):
 
@@ -323,17 +350,8 @@ def main(*argv):
                  'repos'  : repos,
                  'remotes': remotes,
                  'cmd'    : argv[1],
+                 'cwd'    : os.getcwd(),
                  'argv'   : argv[2:]}
-
-    verbs = {'clone'  : clone,
-             'init'   : init,
-             'purge'  : purge,
-             'pull'   : push_pull,
-             'push'   : push_pull,
-             'remote' : remote,
-             'run'    : run_cmd,
-             'path'   : path_cmd,
-             'help'   : cmd_help}
 
     try:
         verbs[argv[1]](arguments)
