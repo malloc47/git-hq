@@ -212,12 +212,12 @@ def run_cmd(args):
     for r in args['repos'].values():
         # failure cases for individual repo
         if r.path is None:
-            print("#"+r.name+": no path defined for repository")
+            sys.stderr.write("#"+r.name+": no path defined for repository\n")
         elif not os.path.isdir(r.path):
-            print("#"+r.name+": not checkout out")
+            sys.stderr.write("#"+r.name+": not checkout out\n")
         # run git-hq'ed command
         elif args['argv'][0] in verbs:
-            print("#"+r.name)
+            sys.stdout.write("#"+r.name)
             new_args         = args.copy()
             new_args['repo'] = r
             new_args['cmd']  = args['argv'][0]
@@ -227,7 +227,7 @@ def run_cmd(args):
         # run pass-through command
         else:
             try:
-                print("#"+r.name)
+                sys.stdout.write("#"+r.name+"\n")
                 git.cmd(list(args['argv']),r.path)
             except IOError:
                 sys.stderr.write("#"+r.name+": not checkout out\n")
