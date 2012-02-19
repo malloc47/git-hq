@@ -21,14 +21,17 @@ As with git itself, `git-hq` uses a human-readable config file format (parsed us
 
 	git hq remote add github git@github.com:username/{repo}.git
 	cd path/to/git/repo/
-	git hq init		# git-hq now knows about this repo  
+	git hq init             # git-hq now knows about this repo  
 	git hq attach github	# the remote added above is now associated  
-	git hq push	 	# push to the repo above  
+	git hq push             # push to the repo above  
 	git hq remote commit	# "bake in" the repos in git-hq into git's config file  
+	git hq run status -suno # shows modified files in all repos in config file
 
 ## Features
 
 Sub commands, just as git uses, control what commands `git-hq` sends to git and how `git-hq` updates its config file with your repository information. Instead of executing `git-hq` directly as `./git-hq [subcommand]`, it is much easier to place the executable on your `$PATH` environment variable with `export PATH=$PATH:/dir/with/git-hq` (or your own shell's equivalent). Not only does this make `git-hq` easier to execute, but git itself will now recognize `git-hq` and allow you just type `git hq [subcommand]` instead.
+
+### Individual Repository
 
 `remote [add,attach,detach,commit]` controls the remotes in `git-hq`'s config file. `remote add {shortname} {repourl}` will add a new, remote (that is initially unattached to any specific repo). `remote attach {shortname}` will add the remote to the current repo (whatever repository you're in). `remote detach {shortname}` will remote a remove from the current repo (but it will still remain available to be attached to other repositories). `remote commit` will add the repositories to git's local config file for the current repo.
 
@@ -42,13 +45,19 @@ Sub commands, just as git uses, control what commands `git-hq` sends to git and 
 
 `push [remotename]*` does a git push on all the remotes (or only the remotes listed). An optional `-o` option pushes from only the first listed remote.
 
+### Multiple Repository
+
+`path [pathname]` sets the pathname for the current repo. If no pathname is specified, simply prints the current path. A path is a "cannonical" location for a repo, and lets `git-hq` know where to find the repo when running commands on all repositories.  
+
+`run [command]` runs a command on all repos listed in `git-hq`'s config file (that have valid paths). Prints a header that includes the repo name before running the command on the repo.
+
 ## Details
 
 `git-hq` is written in python, using a brittle wrapper (subprocess) around a few token git commands (future work should bind to [libgit2](http://libgit2.github.com/) ). Since git has no straightforward way to identify a repository, `git-hq ` uses the first commit's sha-1 to identify the repository.
 
 Testing has been done with both Python 2.7 and Python 3, though `configparser` (aka `ConfigParser`) differs in parsing config files slightly (e.g. tabbed properties will break 2.7 but not 3), but most basic functionality is the same regardless of version.
 
-For remote names, the special `{repo}` string will always be substituted with the name of the repository, which is found by the top-level directory name of the project. If you have a repo that has a different remote name than the director in which it is stored, you can simply omit the `{repo}` and include the full remote string, but this remote will not work with other repositories. In addition, `configparser` provides a `$(variablename)s` syntax (note the "s" at the end) that will substitute a variable declared either in the same section, or in the [DEFAULT] section. This can be used for user names or host names to reduce the amount of typing.
+For remote names, the special `{repo}` string will always be substituted with the name of the repository, which is found by the top-level directory name of the project. If you have a repo that has a different remote name than the director in which it is stored, you can simply omit the `{repo}` and include the full remote string, but this remote will not work with other repositories. `{repo}` will always be downcased, while `{Repo}` will retain case and `{REPO}` will uppercase the repo name. Many hosts differ in how they handle reponame case, so these options should provide enough flexibility in this regard. In addition, `configparser` provides a `$(variablename)s` syntax (note the "s" at the end) that will substitute a variable declared either in the same section, or in the [DEFAULT] section. This can be used for user names or host names to reduce the amount of typing.
 
 ## License
 
