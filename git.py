@@ -69,4 +69,6 @@ def cmd(args,path=None):
     if path is None:
         sp.check_call(["git"]+args)
     else:
+        if not os.path.isdir(path):
+            raise IOError()
         sp.check_call(["git"]+args,cwd=path)
