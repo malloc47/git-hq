@@ -41,8 +41,19 @@ def name():
                                 shell=True).decode("utf-8").strip()
     except AttributeError:
         return sp.Popen("basename $(git rev-parse --show-toplevel)",
-                        stdout=sp.PIPE, shell=True).communicate()[0].decode(
-                        "utf-8").strip()
+                        stdout=sp.PIPE, 
+                        shell=True).communicate()[0].decode("utf-8").strip()
+    except:
+        return None
+
+def path():
+    try:
+        return sp.check_output("git rev-parse --show-toplevel",
+                                shell=True).decode("utf-8").strip()
+    except AttributeError:
+        return sp.Popen("git rev-parse --show-toplevel",
+                        stdout=sp.PIPE, 
+                        shell=True).communicate()[0].decode("utf-8").strip()
     except:
         return None
 
@@ -54,5 +65,8 @@ def exists():
     fnull.close()
     return output
 
-def cmd(args):
-    sp.check_call(["git"]+args)
+def cmd(args,path=None):
+    if path is None:
+        sp.check_call(["git"]+args)
+    else:
+        sp.check_call(["git"]+args,cwd=path)

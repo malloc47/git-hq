@@ -33,10 +33,12 @@ program_name = "git-hq"
 config_path = os.getenv("HOME")+"/."+program_name
 
 class Repo(object):
-    def __init__(self,name,id,repos):
+    """object to store relevant information about a repo"""
+    def __init__(self,name,id,repos,path=None):
         self.name = name
         self.id = id
         self.repos = repos
+        self.path = path
 
 class CmdFailed(Exception):
     def __init__(self,cmd,reason=None):
@@ -45,23 +47,27 @@ class CmdFailed(Exception):
     def __str__(self):
         return repr(self.cmd)
     def message(self):
-        print(program_name+": "+self.cmd+" command failed")
-        if hasattr(self,'reason'): print(self.reason)
+        sys.stderr.write(program_name+": "+self.cmd+" command failed\n")
+        if hasattr(self,'reason'): sys.stderr.write(self.reason+"\n")
 
 class NoRepo(Exception):
     def message(self,exists):
         if exists:
-            print(program_name+": git repository not in config file")
+            sys.stderr.write(program_name+
+                             ": git repository not in config file\n")
             suggest()
         else:
-            print(program_name+": no repository found or not in config file")
+            sys.stderr.write(program_name+
+                             ": no repository found or not in config file\n")
 
 class NoDesiredRepo(Exception):
     def message(self,exists):
         if exists:
-            print(program_name+": git repository currently exists here")
+            sys.stderr.write(program_name+
+                             ": git repository currently exists here\n")
         else:
-            print(program_name+": repository not in config file")
+            sys.stderr.write(program_name+
+                             ": repository not in config file\n")
 
 def load_config(file):
     c = cp.ConfigParser()
@@ -85,7 +91,11 @@ def load_config(file):
                       for r in p['repos'].split(',')]
         except KeyError:
             remote = []
-        repos[p['id']] = Repo(s,p['id'],remote)
+        try:
+            path = p['path']
+        except KeyError:
+            path = None
+        repos[p['id']] = Repo(s,p['id'],remote,path)
     return repos,remotes
 
 def create_config(file):
@@ -213,7 +223,7 @@ def remote(args):
         subcmd[param[0]](args)
 
 def clone(args):
-    if len(args['argv']) < 1:
+    if not args['argv']:
         raise CmdFailed('clone',"no repository specified")
     desired_repo = identify_desired_repo(args['repos'],args['argv'][0])
     valid_argument(desired_repo,NoDesiredRepo)
@@ -243,7 +253,8 @@ def init(args):
         repo_name = args['argv'][0] if len(args['argv']) > 0 and not args['argv'][0] in args['remotes'] else git.name()
         ammend_section_config(config_path,repo_name,[('id',git.last_hash()),
                                                      ('repos',
-                                                      ','.join([x for x in args['argv'] if x in args['remotes']]))])
+                                                      ','.join([x for x in args['argv'] if x in args['remotes']])),
+                                                     ('path',git.path())])
     except cp.DuplicateSectionError:
         raise CmdFailed('init',"repo already in config file")
 
@@ -252,6 +263,35 @@ def purge(args):
         raise CmdFailed('purge',"repo not specified")
     section_to_remove = args['argv'][0] if args['repo'] else args['repo'].name
     remove_section_config(config_path,section_to_remove)
+
+def run_cmd(args):
+    if not args['repos']: 
+        raise CmdFailed('run',"no repos in config file")
+    for r in args['repos'].values():
+        if not r.path is None:
+            print("#"+r.name)
+            git.cmd(list(args['argv']),r.path)
+        else:
+            print("#"+r.name+": no path defined for repository")
+
+def path_cmd(args):
+    if args['repo'] is None:
+        if not args['argv']:
+            raise CmdFailed('path',"repo not specified")
+        else:
+            desired_repo = identify_desired_repo(args['repos'],args['argv'][0])
+            valid_argument(desired_repo,NoDesiredRepo)
+            print(desired_repo.path)
+            return
+        # raise CmdFailed('purge',"repo not specified")
+    if not args['argv'] and not args['repo'].path is None:
+        print(args['repo'].path)
+    elif args['argv']:
+        ammend_property_config(config_path,
+                               args['repo'].name,
+                               ('path',' '.join(args['argv'])))
+    else:
+        raise CmdFailed('path',"no path specified")
 
 def main(*argv):
 
@@ -285,12 +325,18 @@ def main(*argv):
              'pull'   : push_pull,
              'push'   : push_pull,
              'remote' : remote,
+             'run'    : run_cmd,
+             'path'   : path_cmd,
              'help'   : cmd_help}
 
     try:
         verbs[argv[1]](arguments)
     except KeyError:
-        print(program_name+": "+argv[1]+" is not a "+program_name+" command. See 'git hq help'.")
+        sys.stderr.write(program_name+
+                         ": "+argv[1]+
+                         " is not a "+
+                         program_name+
+                         " command. See 'git hq help'.")
         return 1
     except (NoRepo,NoDesiredRepo) as e:
         e.message(exists)
