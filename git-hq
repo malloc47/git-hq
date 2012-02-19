@@ -269,12 +269,14 @@ def run_cmd(args):
         raise CmdFailed('run',"no repos in config file")
     for r in args['repos'].values():
         if not r.path is None:
-            try:
-                sys.stdout.write("#"+r.name)
-                git.cmd(list(args['argv']),r.path)
-                sys.stdout.write("\n")
-            except IOError:
-                sys.stdout.write(": not checkout out\n")
+            if not os.path.isdir(r.path):
+                print("#"+r.name+": not checkout out")
+            else:
+                try:
+                    print("#"+r.name)
+                    git.cmd(list(args['argv']),r.path)
+                except IOError:
+                    sys.stderr.write("#"+r.name+": not checkout out\n")
         else:
             print("#"+r.name+": no path defined for repository")
 
