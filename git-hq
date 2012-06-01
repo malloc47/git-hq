@@ -204,7 +204,7 @@ def purge(args):
 
 def run_cmd(args):
     # failure cases
-    if not args['repos']: 
+    if not args['repos']:
         raise CmdFailed('run',"no repos in config file")
     if not args['argv']:
         raise CmdFailed('run',"no command specified")
@@ -256,6 +256,7 @@ verbs = {'clone'  : clone,
          'purge'  : purge,
          'pull'   : push_pull,
          'push'   : push_pull,
+         'fetch'   : push_pull,
          'remote' : remote,
          'run'    : run_cmd,
          'path'   : path_cmd,
