@@ -251,6 +251,18 @@ def path_cmd(args):
     else:
         raise CmdFailed('path',"no path specified")
 
+def pwd_cmd(args):
+    if args['repo'] is None and not args['argv']:
+        raise CmdFailed('path',"repo not specified")
+    elif args['argv']:
+        desired_repo = identify_desired_repo(args['repos'],args['argv'][0])
+        valid_argument(desired_repo,NoDesiredRepo)
+        print(desired_repo.path)
+    elif not args['repo'] is None:
+        print(args['repo'].path)
+    else:
+        raise CmdFailed('path',"repo not specified")
+
 verbs = {'clone'  : clone,
          'init'   : init,
          'purge'  : purge,
@@ -259,6 +271,7 @@ verbs = {'clone'  : clone,
          'fetch'   : push_pull,
          'remote' : remote,
          'run'    : run_cmd,
+         'pwd'    : pwd_cmd,
          'path'   : path_cmd,
          'help'   : cmd_help}
 
