@@ -213,11 +213,14 @@ def run_cmd(args):
         # failure cases for individual repo
         if r.path is None:
             sys.stderr.write("#"+r.name+": no path defined for repository\n")
+            sys.stdout.flush()
         elif not os.path.isdir(r.path):
             sys.stderr.write("#"+r.name+": not checkout out\n")
+            sys.stdout.flush()
         # run git-hq'ed command
         elif args['argv'][0] in verbs:
-            sys.stdout.write("#"+r.name)
+            sys.stdout.write("#"+r.name+"\n")
+            sys.stdout.flush()
             new_args         = args.copy()
             new_args['repo'] = r
             new_args['cmd']  = args['argv'][0]
