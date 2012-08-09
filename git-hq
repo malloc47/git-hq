@@ -187,14 +187,15 @@ def push_pull(args):
             CmdFailed(cmd,"command failed")
 
 def init(args):
-    try:
-        repo_name = args['argv'][0] if len(args['argv']) > 0 and not args['argv'][0] in args['remotes'] else git.name()
+    repo_name = args['argv'][0] if len(args['argv']) > 0 and not args['argv'][0] in args['remotes'] else git.name()
+    h = git.last_hash()
+    if h and not h is None:
         config.ammend_section_config(config_path,repo_name,[('id',git.last_hash()),
-                                                     ('repos',
-                                                      ','.join([x for x in args['argv'] if x in args['remotes']])),
-                                                     ('path',git.path())])
-    except cp.DuplicateSectionError:
-        raise CmdFailed('init',"repo already in config file")
+                                                            ('repos',
+                                                             ','.join([x for x in args['argv'] if x in args['remotes']])),
+                                                            ('path',git.path())])
+    else:
+        raise CmdFailed('init',"no initial commit found")
 
 def purge(args):
     if args['repo'] is None and not args['argv']:
