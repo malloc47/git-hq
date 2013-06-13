@@ -21,7 +21,6 @@ def hashes(path=None):
     except sp.CalledProcessError:
         return []
 
-    output.reverse()
     return output
 
 def last_hash(path=None):
